@@ -74,11 +74,7 @@ searchForm.addEventListener("submit", async (e) => {
     console.log("results", results);
             
     
-        // pixabayAPI.page = `${pageN}`;
-        // console.log(pageN);
-        // pageN += 1;
-
-    Notify.success(`'Hooray! We found ${results.totalHits} images.'`);
+        Notify.success(`'Hooray! We found ${results.totalHits} images.'`);
 
     }
 
@@ -103,8 +99,6 @@ async function fetchPhotos(searchQueryResult) {
     pixabayAPI.page = `${pageN}`;
     console.log(pixabayAPI);
     console.log("page", page);
-
-    console.log(q);
 
     const response = await fetch(`${baseUrl}?key=${key}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&order=${order}&page=${page}&per_page=${per_page}`);
     const results = await response.json();
