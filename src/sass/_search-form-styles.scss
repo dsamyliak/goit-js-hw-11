@@ -1,4 +1,10 @@
 .search-form {
+  position: fixed;
+  top: 0%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, 0%);
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +48,7 @@ input:focus {
   border-width: 1px;
 }
 
-button {
+button.search-btn {
   margin-left: 20px;
   width: 60px;
   height: 70%;
@@ -59,7 +65,7 @@ button {
   border-width: 0.1em;
 }
 
-button:hover {
+button.search-btn:hover {
   background-color: white;
   color: black;
   border-color: darkgoldenrod;
