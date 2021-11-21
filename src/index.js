@@ -1,15 +1,23 @@
 import './sass/main.scss';
 import { Notify } from 'notiflix';
-
-// var debounce = require('lodash.debounce');
 const axios = require('axios').default;
+// Описан в документации
+// import SimpleLightbox from 'simplelightbox';
+// Дополнительный импорт стилей
+// import 'simplelightbox/dist/simple-lightbox.min.css';
+// var debounce = require('lodash.debounce');
 
 // -------------------------------------------------------------------------------------------------------
 // variables
+const queryObj = {
+searchQueryResult: '',
+q: '',
+pageN: 1,
+};
 
 let searchQueryResult = '';
-let pageN = 1;
 let q = '';
+let pageN = 1;
 
 const pixabayAPI = {
 
@@ -23,57 +31,85 @@ const pixabayAPI = {
         per_page: "40",
 
     };
+const markupData = {
+    markup: "",
+    htmlCode: "",
+};
 
 // -------------------------------------------------------------------------------------------------------
 // event listener form
 
-const gallery = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
+const gallery = document.querySelector('.gallery');
+
 
 searchForm.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
-    const {
-        elements: { searchQuery }
-    } = e.target;
+    const { elements: { searchQuery } } = e.target;
 
     searchQueryResult = searchQuery.value;
+    queryObj.searchQueryResult = searchQuery.value;
+
+    
     console.log("searchQueryResult",searchQueryResult);
     console.log("q", q);
     
 
-    if (q !== searchQueryResult) {
-        console.log("CHANGED!!!");
+    if (searchQueryResult !== q) {
+        console.log("CHANGED!!! NOT EMPTY QUERY");
+
+        queryObj.pageN = 1;
         pageN = 1;
-        pixabayAPI.page = `${pageN}`
+
+        pixabayAPI.page = `${pageN}`;
+        gallery.innerHTML = "";
+        btnLoadMore.classList.remove("is-visible");
     } else {
         console.log("page+1!!!");
+
+        queryObj.pageN += 1;
         pageN += 1;
+
         pixabayAPI.page = `${pageN}`;
+        btnLoadMore.classList.remove("is-visible");
     };
     
+    q = searchQueryResult;
+    queryObj.q = queryObj.searchQueryResult;
 
     console.log("pageN", pageN);
 
-    q = searchQueryResult;
     
-
     try {
 
-        if (searchQueryResult === '' || searchQueryResult === null || searchQueryResult === 'underfined') {
+        if (searchQueryResult === '') {
        
             throw new Error();
-
+            
         }
 
         const results = await fetchPhotos(searchQueryResult);
-        const htmlCode = await renderedPhotos(results);
+        markupData.htmlCode = await renderedPhotos(results);
         
-        gallery.insertAdjacentHTML("beforeend", htmlCode);
+        gallery.insertAdjacentHTML("beforeend", markupData.htmlCode);
+        btnLoadMore.classList.add("is-visible");
         
-        Notify.success(`'Hooray! We found ${results.totalHits} images.'`);
 
+        const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
+        const { total, totalHits, hits } = results;    
+        const totalPages = Math.round(totalHits / per_page);
+        
+        
+        if (page > totalPages) {
+        
+        btnLoadMore.classList.remove("is-visible");
+
+        };
+
+
+        Notify.success(`'Hooray! We found ${results.totalHits} images.'`);
         console.log("searchQueryResult", searchQueryResult);
         console.log("results", results);
 
@@ -84,15 +120,54 @@ searchForm.addEventListener("submit", async (e) => {
         Notify.failure('Sorry, there are no images matching your search query. Please try again.');
 
     }
-    
+    console.log("queryObj", queryObj);
 });
 
 // -------------------------------------------------------------------------------------------------------
 // button load more
 
 const btnLoadMore = document.querySelector('.load-more');
-btnLoadMore.addEventListener("click", () => {
+btnLoadMore.addEventListener("click", async () => {
+
+        queryObj.pageN += 1;
+
+        pageN += 1;
+        pixabayAPI.page = `${pageN}`;
+
+try {
+
+        const results = await fetchPhotos(searchQueryResult);
+        markupData.htmlCode = await renderedPhotos(results);
+        
+        gallery.insertAdjacentHTML("beforeend", markupData.htmlCode);
+        btnLoadMore.classList.add("is-visible");
+        
+
+        const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
+        const { total, totalHits, hits } = results;    
+        const totalPages = Math.round(totalHits / per_page);
+        
+        if (page > totalPages) {
+        
+            btnLoadMore.classList.remove("is-visible");
+            throw new Error();
+
+        };
+
+        
+        console.log("searchQueryResult", searchQueryResult);
+        console.log("results", results);
+
+    }
+
+    catch (error) {
+    
+        Notify.failure("We're sorry, but you've reached the end of search results.");
+
+    }
+
     console.log("btnLoadMore working");
+    console.log("queryObj", queryObj);
 });
 
 // -------------------------------------------------------------------------------------------------------
@@ -102,36 +177,42 @@ async function fetchPhotos(searchQueryResult) {
     
     const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
 
+    // const { searchQueryResult, q, pageN } = queryObj;
+
     console.log(searchQueryResult);
     console.log(q);
 
     pixabayAPI.page = `${pageN}`;
-    // console.log(pixabayAPI);
+    // page = `${pageN}`;
+    
+    
     console.log("page", page);
 
     const response = await fetch(`${baseUrl}?key=${key}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&order=${order}&page=${page}&per_page=${per_page}`);
     const results = await response.json();
 
     console.log("response", response);
-    console.log(page);
+    console.log("page", page);
     
     //results destruction
    
     const {total, totalHits, hits} = results;
-
+    const totalPages = Math.round(totalHits / per_page);
+    
     if (total === 0) {
     throw new Error();
     };
 
     console.log("totalHits",totalHits);
     console.log("per_page", per_page);
-    const totalPages = totalHits / per_page;
+    
     console.log("totalPages=", totalPages);
 
     //total pages check
 
     if (page > totalPages) {
-
+        
+        btnLoadMore.classList.remove("is-visible");
         Notify.failure("We're sorry, but you've reached the end of search results.");
         return results;
 
@@ -140,14 +221,16 @@ async function fetchPhotos(searchQueryResult) {
     //received data
     return results;
 
-    
 };
+
+// -------------------------------------------------------------------------------------------------------
+// render photos function, make html markup
 
 async function renderedPhotos(results) {
 
     const { hits } = results;
 
-    const markup = hits.map((hit) =>
+    markupData.markup = hits.map((hit) =>
         `<div class="photo-card">
         <a href="${hit.largeImageURL}" rel="noopener noreferrer"><img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" width="100%" height="200vh" class="img-item" /></a>
         <div class="info">
@@ -166,9 +249,8 @@ async function renderedPhotos(results) {
   </div>
 </div>`).join("");
     
-    return markup;
+    return markupData.markup;
     
 };
-
 
 // -------------------------------------------------------------------------------------------------------
