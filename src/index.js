@@ -43,7 +43,6 @@ const markupData = {
 const searchForm = document.querySelector('.search-form');
 const gallerySelector = document.querySelector('.gallery');
 
-
 // -------------------------------------------------------------------------------------------------------
 // event listener search form
 
@@ -64,7 +63,8 @@ searchForm.addEventListener("submit", async (e) => {
         console.log(searchQueryResult);
         gallerySelector.innerHTML = "";
         btnLoadMore.classList.remove("is-visible");
-            return Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+        
+        return Notify.failure('Sorry, there are no images matching your search query. Please try again.');
             
     };
 
@@ -98,8 +98,11 @@ searchForm.addEventListener("submit", async (e) => {
 
         gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
-        let gallery = new SimpleLightbox('.gallery a', { /* options */ });
-        gallery.refresh();
+        
+        let gallery = new SimpleLightbox('.gallery a', { enableKeyboard: true,/* options */ });
+         gallery.refresh();
+        
+        
 
         const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
         const { total, totalHits, hits } = results;    
@@ -145,7 +148,10 @@ try {
         
         gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
-        let gallery = new SimpleLightbox('.gallery a', { /* options */ });
+    
+        
+        
+        let gallery = new SimpleLightbox('.gallery a', { /* options */enableKeyboard: true, });
         gallery.refresh();
 
         const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
