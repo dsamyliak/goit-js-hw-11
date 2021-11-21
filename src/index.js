@@ -2,22 +2,20 @@ import './sass/main.scss';
 import { Notify } from 'notiflix';
 const axios = require('axios').default;
 // Описан в документации
-// import SimpleLightbox from 'simplelightbox';
+import SimpleLightbox from 'simplelightbox';
 // Дополнительный импорт стилей
-// import 'simplelightbox/dist/simple-lightbox.min.css';
-// var debounce = require('lodash.debounce');
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
 // -------------------------------------------------------------------------------------------------------
-// variables
-const queryObj = {
-searchQueryResult: '',
-q: '',
-pageN: 1,
-};
+//let variables
 
 let searchQueryResult = '';
 let q = '';
 let pageN = 1;
+
+//Objects
+
+//pixabayObj
 
 const pixabayAPI = {
 
@@ -30,87 +28,93 @@ const pixabayAPI = {
         page: '1',
         per_page: "40",
 
-    };
+};
+    
+//markup
+
 const markupData = {
     markup: "",
     htmlCode: "",
 };
 
 // -------------------------------------------------------------------------------------------------------
-// event listener form
+// searchForm and gallery find in DOM
 
 const searchForm = document.querySelector('.search-form');
-const gallery = document.querySelector('.gallery');
+const gallerySelector = document.querySelector('.gallery');
 
+
+// -------------------------------------------------------------------------------------------------------
+// event listener search form
 
 searchForm.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
     const { elements: { searchQuery } } = e.target;
-
+    
     searchQueryResult = searchQuery.value;
-    queryObj.searchQueryResult = searchQuery.value;
 
+
+    // console.log
+    console.log("searchQueryResult:",`"${searchQueryResult}"`);
+    console.log("q:", `"${q}"`);
     
-    console.log("searchQueryResult",searchQueryResult);
-    console.log("q", q);
-    
+    if (searchQueryResult === '') {
+        console.log(searchQueryResult);
+        gallerySelector.innerHTML = "";
+        btnLoadMore.classList.remove("is-visible");
+            return Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+            
+    };
 
     if (searchQueryResult !== q) {
+
         console.log("CHANGED!!! NOT EMPTY QUERY");
 
-        queryObj.pageN = 1;
         pageN = 1;
-
         pixabayAPI.page = `${pageN}`;
-        gallery.innerHTML = "";
+
+        gallerySelector.innerHTML = "";
         btnLoadMore.classList.remove("is-visible");
+
     } else {
+
         console.log("page+1!!!");
 
-        queryObj.pageN += 1;
         pageN += 1;
-
         pixabayAPI.page = `${pageN}`;
+        
         btnLoadMore.classList.remove("is-visible");
+
     };
     
     q = searchQueryResult;
-    queryObj.q = queryObj.searchQueryResult;
-
-    console.log("pageN", pageN);
-
     
     try {
 
-        if (searchQueryResult === '') {
-       
-            throw new Error();
-            
-        }
-
         const results = await fetchPhotos(searchQueryResult);
         markupData.htmlCode = await renderedPhotos(results);
-        
-        gallery.insertAdjacentHTML("beforeend", markupData.htmlCode);
+
+        gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
-        
+        let gallery = new SimpleLightbox('.gallery a', { /* options */ });
+        gallery.refresh();
 
         const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
         const { total, totalHits, hits } = results;    
-        const totalPages = Math.round(totalHits / per_page);
+        const totalPages = Math.ceil(totalHits / per_page);
         
         
-        if (page > totalPages) {
+        if (page >= totalPages) {
         
         btnLoadMore.classList.remove("is-visible");
 
         };
 
-
         Notify.success(`'Hooray! We found ${results.totalHits} images.'`);
-        console.log("searchQueryResult", searchQueryResult);
+
+        //console.log
         console.log("results", results);
 
     }
@@ -119,8 +123,10 @@ searchForm.addEventListener("submit", async (e) => {
     
         Notify.failure('Sorry, there are no images matching your search query. Please try again.');
 
-    }
-    console.log("queryObj", queryObj);
+    };
+
+    // console.log
+    console.log("");
 });
 
 // -------------------------------------------------------------------------------------------------------
@@ -128,8 +134,6 @@ searchForm.addEventListener("submit", async (e) => {
 
 const btnLoadMore = document.querySelector('.load-more');
 btnLoadMore.addEventListener("click", async () => {
-
-        queryObj.pageN += 1;
 
         pageN += 1;
         pixabayAPI.page = `${pageN}`;
@@ -139,23 +143,20 @@ try {
         const results = await fetchPhotos(searchQueryResult);
         markupData.htmlCode = await renderedPhotos(results);
         
-        gallery.insertAdjacentHTML("beforeend", markupData.htmlCode);
+        gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
-        
+        let gallery = new SimpleLightbox('.gallery a', { /* options */ });
+        gallery.refresh();
 
         const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
         const { total, totalHits, hits } = results;    
-        const totalPages = Math.round(totalHits / per_page);
+        const totalPages = Math.ceil(totalHits / per_page);
         
-        if (page > totalPages) {
-        
+    if (page >= totalPages) {
+            
             btnLoadMore.classList.remove("is-visible");
-            throw new Error();
-
         };
 
-        
-        console.log("searchQueryResult", searchQueryResult);
         console.log("results", results);
 
     }
@@ -167,29 +168,28 @@ try {
     }
 
     console.log("btnLoadMore working");
-    console.log("queryObj", queryObj);
+    console.log("");
 });
 
 // -------------------------------------------------------------------------------------------------------
 // fetch photos function
 
 async function fetchPhotos(searchQueryResult) {
-    
+
     const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
 
-    // const { searchQueryResult, q, pageN } = queryObj;
-
-    console.log(searchQueryResult);
-    console.log(q);
 
     pixabayAPI.page = `${pageN}`;
-    // page = `${pageN}`;
-    
     
     console.log("page", page);
 
-    const response = await fetch(`${baseUrl}?key=${key}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&order=${order}&page=${page}&per_page=${per_page}`);
-    const results = await response.json();
+    // const response = await fetch(`${baseUrl}?key=${key}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&order=${order}&page=${page}&per_page=${per_page}`);
+    // const results = await response.json();
+    
+    const response = await axios.get(`${baseUrl}?key=${key}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&order=${order}&page=${page}&per_page=${per_page}`);
+    const results = response.data;
+    console.log("response.data", response.data);
+    
 
     console.log("response", response);
     console.log("page", page);
@@ -197,10 +197,19 @@ async function fetchPhotos(searchQueryResult) {
     //results destruction
    
     const {total, totalHits, hits} = results;
-    const totalPages = Math.round(totalHits / per_page);
+    const totalPages = Math.ceil(totalHits / per_page);
     
     if (total === 0) {
     throw new Error();
+    };
+
+    //total pages check
+    if (page >= totalPages) {
+        
+        btnLoadMore.classList.remove("is-visible");
+        Notify.failure("We're sorry, but you've reached the end of search results.");
+        return results;
+
     };
 
     console.log("totalHits",totalHits);
@@ -208,15 +217,6 @@ async function fetchPhotos(searchQueryResult) {
     
     console.log("totalPages=", totalPages);
 
-    //total pages check
-
-    if (page > totalPages) {
-        
-        btnLoadMore.classList.remove("is-visible");
-        Notify.failure("We're sorry, but you've reached the end of search results.");
-        return results;
-
-    };
 
     //received data
     return results;
@@ -231,26 +231,27 @@ async function renderedPhotos(results) {
     const { hits } = results;
 
     markupData.markup = hits.map((hit) =>
-        `<div class="photo-card">
-        <a href="${hit.largeImageURL}" rel="noopener noreferrer"><img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" width="100%" height="200vh" class="img-item" /></a>
+        `<a href="${hit.largeImageURL}"><div class="photo-card">
+        <img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" width="300px" height="200px" class="img-item" />
         <div class="info">
     <p class="info-item">
-      <b>Likes: ${hit.likes}</b>
+      <b>Likes:</b>${hit.likes}
     </p>
     <p class="info-item">
-      <b>Views: ${hit.views}</b>
+      <b>Views:</b>${hit.views}
     </p>
     <p class="info-item">
-      <b>Comments: ${hit.comments}</b>
+      <b>Comments:</b>${hit.comments}
     </p>
     <p class="info-item">
-      <b>Downloads: ${hit.downloads}</b>
+      <b>Downloads:</b>${hit.downloads}
     </p>
   </div>
-</div>`).join("");
+</div></a>`).join("");
     
     return markupData.markup;
     
 };
+
 
 // -------------------------------------------------------------------------------------------------------
