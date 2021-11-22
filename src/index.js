@@ -238,7 +238,8 @@ async function renderedPhotos(results) {
 
     markupData.markup = hits.map((hit) =>
         `<a href="${hit.largeImageURL}"><div class="photo-card">
-        <img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" width="300px" height="200px" class="img-item" />
+        <img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy"
+          class="img-item" />
         <div class="info">
     <p class="info-item">
       <b>Likes:</b>${hit.likes}
