@@ -12,6 +12,8 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 let searchQueryResult = '';
 let q = '';
 let pageN = 1;
+let gallery = new SimpleLightbox('.gallery a', { /* options */enableKeyboard: true, });
+
 
 //Objects
 
@@ -99,8 +101,8 @@ searchForm.addEventListener("submit", async (e) => {
         gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
         
-        let gallery = new SimpleLightbox('.gallery a', { enableKeyboard: true,/* options */ });
-         gallery.refresh();
+        // simpleLightbox gallery destroys and reinitilized
+        gallery.refresh();
         
         
 
@@ -148,10 +150,8 @@ try {
         
         gallerySelector.insertAdjacentHTML("beforeend", markupData.htmlCode);
         btnLoadMore.classList.add("is-visible");
-    
         
-        
-        let gallery = new SimpleLightbox('.gallery a', { /* options */enableKeyboard: true, });
+        // simpleLightbox gallery destroys and reinitilized
         gallery.refresh();
 
         const { baseUrl, key, image_type, orientation, safesearch, order, page, per_page } = pixabayAPI;
